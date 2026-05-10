@@ -166,7 +166,7 @@ const COLORS = {
   steel: '#999',
   water: '#1a5276',
   tree: '#2d7d2d',
-  ground: '#3a3a3a',
+  ground: '#555',
   base: '#ff4',
   baseDead: '#444',
 };
@@ -197,13 +197,8 @@ function handleEnterStart(e) {
       resetGame();
       startPlaying();
     } else if (GAME.state === 'gameover' || GAME.state === 'win') {
-      GAME.state = 'title';
-      overlay.style.display = 'flex';
-      overlay.innerHTML =
-        '<h1 class="title">坦 克 大 战</h1>' +
-        '<div style="color:#888;font-size:13px;letter-spacing:2px;">TANK BATTLE</div>' +
-        '<div class="sub">按 ENTER 开始游戏</div>' +
-        '<div class="info">v1.0</div>';
+      resetGame();
+      startPlaying();
     }
   }
 }
@@ -220,14 +215,9 @@ overlay.addEventListener('click', () => {
     resetGame();
     startPlaying();
   } else if (GAME.state === 'gameover' || GAME.state === 'win') {
-    GAME.state = 'title';
-    overlay.style.display = 'flex';
-    overlay.innerHTML =
-      '<h1 class="title">坦 克 大 战</h1>' +
-      '<div style="color:#888;font-size:13px;letter-spacing:2px;">TANK BATTLE</div>' +
-      '<div class="sub">按 ENTER 开始游戏</div>' +
-      '<div class="info">v1.0</div>';
-  }
+      resetGame();
+      startPlaying();
+    }
 });
 
 // ─── Utility ───────────────────────────────────────────────
@@ -702,6 +692,7 @@ function drawParticles(ctx) {
 
 // ─── Map Drawing ───────────────────────────────────────────
 function drawMap(ctx) {
+  if (!GAME.map) return; // safety: no map yet
   for (let row = 0; row < ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
       const val = GAME.map[row][col];
@@ -946,20 +937,8 @@ function updateEnemyUI() {
 function update() {
   GAME.frameCount++;
 
-  if (GAME.state === 'title') {
-    if (keys['Enter']) { resetGame(); startPlaying(); keys['Enter'] = false; }
-    return;
-  }
-
-  if (GAME.state === 'gameover' || GAME.state === 'win') {
-    if (keys['Enter']) { GAME.state = 'title'; overlay.style.display = 'flex'; overlay.innerHTML = `
-      <h1 class="title">坦 克 大 战</h1>
-      <div style="color:#888;font-size:13px;letter-spacing:2px;">TANK BATTLE</div>
-      <div class="sub">点击或按 ENTER 开始</div>
-      <div class="info">v1.0</div>
-    `; keys['Enter'] = false; }
-    return;
-  }
+  if (GAME.state === 'title') return;
+  if (GAME.state === 'gameover' || GAME.state === 'win') return;
 
   // ── Playing state ──
 
@@ -1097,6 +1076,8 @@ function gameLoop() {
 }
 
 // ─── Start ─────────────────────────────────────────────────
+// Initialize basic map for title screen
+GAME.map = generateLevel(1);
 gameLoop();
 
 console.log('🎮 坦克大战 - Tank Battle loaded!');
