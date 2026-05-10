@@ -206,6 +206,16 @@ function handleKeyDown(e) {
     }
   }
 
+  // Direct-shoot on space keydown (not polling-based)
+  if (key === ' ') {
+    if (GAME.state === 'playing' && GAME.player && GAME.player.alive && GAME.player.spawnAnim >= 20) {
+      if (GAME.player.cooldown === 0 && GAME.bullets.length < 3) {
+        spawnBullet(GAME.player);
+        GAME.player.cooldown = 8;
+      }
+    }
+  }
+
   // Prevent browser defaults for game keys
   if (key === ' ' || key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight' || key === 'Enter' || code === 'Space') {
     e.preventDefault();
@@ -395,7 +405,7 @@ function createTank(x, y, dir, type) {
     speed: type === 'player' ? 2 : 1,
     hp: type === 'player' ? 1 : 1,
     cooldown: 0,
-    maxCooldown: type === 'player' ? 15 : 30,
+    maxCooldown: type === 'player' ? 8 : 30,
     alive: true,
     moveTimer: 0,
     dirChangeTimer: rand(30, 90),
@@ -438,14 +448,6 @@ function updateTank(t) {
     // Clamp
     t.x = clamp(t.x, 0, W - t.w);
     t.y = clamp(t.y, 0, H - t.h);
-
-    // Shooting
-    if (keys[' '] || keys['Space']) {
-      if (t.cooldown === 0 && GAME.bullets.length < 2) {
-        spawnBullet(t);
-        t.cooldown = t.maxCooldown;
-      }
-    }
   }
 
   // ── Enemy AI ──
