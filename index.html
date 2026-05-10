@@ -189,9 +189,13 @@ const enemyGrid = document.getElementById('enemyGrid');
 
 // ─── Input ─────────────────────────────────────────────────
 const keys = {};
-// Handle Enter key immediately (not polling-based)
-function handleEnterStart(e) {
-  if (e.key === 'Enter') {
+// Handle Enter & Space immediately (not polling-based)
+function handleKeyDown(e) {
+  const key = e.key, code = e.code;
+  keys[key] = true;
+  if (code === 'Space') keys[' '] = true;
+
+  if (key === 'Enter') {
     e.preventDefault();
     if (GAME.state === 'title') {
       resetGame();
@@ -201,13 +205,17 @@ function handleEnterStart(e) {
       startPlaying();
     }
   }
+
+  // Prevent browser defaults for game keys
+  if (key === ' ' || key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight' || key === 'Enter' || code === 'Space') {
+    e.preventDefault();
+  }
 }
-document.addEventListener('keydown', e => {
-  keys[e.key] = true;
-  handleEnterStart(e);
-  if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') e.preventDefault();
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', e => {
+  keys[e.key] = false;
+  if (e.code === 'Space') keys[' '] = false;
 });
-document.addEventListener('keyup', e => { keys[e.key] = false; });
 
 // Click on overlay to start
 overlay.addEventListener('click', () => {
