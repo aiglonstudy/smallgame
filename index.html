@@ -110,7 +110,7 @@ body {
     <div id="overlay">
       <h1 class="title">坦 克 大 战</h1>
       <div style="color:#888;font-size:13px;letter-spacing:2px;">TANK BATTLE</div>
-      <div class="sub">按 ENTER 开始游戏</div>
+      <div class="sub">点击或按 ENTER 开始</div>
       <div class="info">v1.0</div>
     </div>
   </div>
@@ -189,11 +189,46 @@ const enemyGrid = document.getElementById('enemyGrid');
 
 // ─── Input ─────────────────────────────────────────────────
 const keys = {};
+// Handle Enter key immediately (not polling-based)
+function handleEnterStart(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (GAME.state === 'title') {
+      resetGame();
+      startPlaying();
+    } else if (GAME.state === 'gameover' || GAME.state === 'win') {
+      GAME.state = 'title';
+      overlay.style.display = 'flex';
+      overlay.innerHTML =
+        '<h1 class="title">坦 克 大 战</h1>' +
+        '<div style="color:#888;font-size:13px;letter-spacing:2px;">TANK BATTLE</div>' +
+        '<div class="sub">按 ENTER 开始游戏</div>' +
+        '<div class="info">v1.0</div>';
+    }
+  }
+}
 document.addEventListener('keydown', e => {
   keys[e.key] = true;
-  if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault();
+  handleEnterStart(e);
+  if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter') e.preventDefault();
 });
 document.addEventListener('keyup', e => { keys[e.key] = false; });
+
+// Click on overlay to start
+overlay.addEventListener('click', () => {
+  if (GAME.state === 'title') {
+    resetGame();
+    startPlaying();
+  } else if (GAME.state === 'gameover' || GAME.state === 'win') {
+    GAME.state = 'title';
+    overlay.style.display = 'flex';
+    overlay.innerHTML =
+      '<h1 class="title">坦 克 大 战</h1>' +
+      '<div style="color:#888;font-size:13px;letter-spacing:2px;">TANK BATTLE</div>' +
+      '<div class="sub">按 ENTER 开始游戏</div>' +
+      '<div class="info">v1.0</div>';
+  }
+});
 
 // ─── Utility ───────────────────────────────────────────────
 function aabb(ax, ay, aw, ah, bx, by, bw, bh) {
@@ -219,16 +254,14 @@ function generateLevel(num) {
   map[25][12] = 3;
   map[25][13] = 3;
 
-  // ── Fortress around base ──
-  // Protective brick wall around the base with a small opening
-  const bx = 10, by = 22;
-  for (let y = by; y < by + 3; y++) {
-    for (let x = bx; x < bx + 6; x++) {
-      if (y >= 24 && x >= 12 && x <= 13) continue; // don't cover base
-      if (y === 24 && (x === 12 || x === 13)) continue; // opening
-      if (map[y][x] === 0) map[y][x] = 1;
-    }
+  // ── Base protection walls ──
+  // Side walls (left and right of base)
+  for (let row = 21; row <= 23; row++) {
+    map[row][10] = 1; map[row][15] = 1;
   }
+  // Top wall with opening
+  for (let col = 11; col <= 14; col++) map[21][col] = 1;
+  map[21][12] = 0; map[21][13] = 0; // gap in top wall
 
   // ── Brick patterns ──
   // Row of bricks every 3 rows, with gaps
@@ -844,8 +877,8 @@ function startLevel() {
   GAME.enemiesSpawned = 0;
   GAME.spawnTimer = 60;
 
-  // Create player
-  GAME.player = createTank(12 * CELL, 24 * CELL, DIR.UP, 'player');
+  // Create player (bottom-left, away from base)
+  GAME.player = createTank(2 * CELL, 23 * CELL, DIR.UP, 'player');
   GAME.player.alive = true;
 
   updateUI();
@@ -922,7 +955,7 @@ function update() {
     if (keys['Enter']) { GAME.state = 'title'; overlay.style.display = 'flex'; overlay.innerHTML = `
       <h1 class="title">坦 克 大 战</h1>
       <div style="color:#888;font-size:13px;letter-spacing:2px;">TANK BATTLE</div>
-      <div class="sub">按 ENTER 开始游戏</div>
+      <div class="sub">点击或按 ENTER 开始</div>
       <div class="info">v1.0</div>
     `; keys['Enter'] = false; }
     return;
@@ -986,7 +1019,7 @@ function update() {
           // Respawn player after delay
           setTimeout(() => {
             if (GAME.state === 'playing') {
-              GAME.player = createTank(12 * CELL, 24 * CELL, DIR.UP, 'player');
+              GAME.player = createTank(2 * CELL, 23 * CELL, DIR.UP, 'player');
               GAME.player.spawnAnim = 0;
             }
           }, 1000);
